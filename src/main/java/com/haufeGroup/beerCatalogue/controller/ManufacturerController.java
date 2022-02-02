@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.haufeGroup.beerCatalogue.model.Beer;
-import com.haufeGroup.beerCatalogue.model.Manufacturer;
+import com.haufeGroup.beerCatalogue.dto.BeerDto;
+import com.haufeGroup.beerCatalogue.dto.ManufacturerDto;
+import com.haufeGroup.beerCatalogue.mapper.BeerMapper;
+import com.haufeGroup.beerCatalogue.mapper.ManufacturerMapper;
 import com.haufeGroup.beerCatalogue.service.IManufacturerService;
+import com.haufeGroup.beerCatalogue.util.SortExtractor;
 
 @RestController
 @RequestMapping("/api/manufacturers")
@@ -23,35 +27,51 @@ public class ManufacturerController {
 	@Autowired
 	private IManufacturerService manufacturerService;
 
+	@Autowired
+	ManufacturerMapper manufacturerMapper;
+
+	@Autowired
+	BeerMapper beerMapper;
+
+	@Autowired
+	SortExtractor sortExtractor;
+
+	@GetMapping("/")
+	public List<ManufacturerDto> getManufacturerListSortByUserCriteria(
+			@RequestParam(defaultValue = "id,desc") String[] sort) {
+		return manufacturerMapper.mapFromEntityList(
+				manufacturerService.getManufacturerListSortByCriteria(sortExtractor.extractSortCriteria(sort)));
+	}
+
 	@GetMapping("/{id}")
-	public Manufacturer getManufacturer(@PathVariable Long id) {
-		return manufacturerService.getManufacturerById(id);
+	public ManufacturerDto getManufacturer(@PathVariable Long id) {
+		return manufacturerMapper.mapFromEntity(manufacturerService.getManufacturerById(id));
 	}
 
 	@GetMapping("/{id}/beerList")
-	public List<Beer> getBeerList(@PathVariable(name = "id") Long manufacturerId) {
-		return manufacturerService.getBeerList(manufacturerId);
+	public List<BeerDto> getBeerListSortByCriteria(@PathVariable(name = "id") Long manufacturerId,
+			@RequestParam(defaultValue = "id,desc") String[] sort) {
+		return beerMapper.mapFromEntityList(manufacturerService
+				.getBeerListSortByCriteria(manufacturerId, sortExtractor.extractSortCriteria(sort)));
 	}
 
-	@GetMapping()
-	public List<Manufacturer> getManufacturers() {
-		return manufacturerService.getManufacturers();
-	}
-
-	@PostMapping()
-	public Manufacturer addManufacturer(@RequestBody final Manufacturer newManufacturer) {
-		return manufacturerService.addManufacturer(newManufacturer);
+	@PostMapping("/")
+	public ManufacturerDto addManufacturer(@RequestBody final ManufacturerDto newManufacturerDto) {
+		return manufacturerMapper
+				.mapFromEntity(manufacturerService.addManufacturer(manufacturerMapper.mapFromDto(newManufacturerDto)));
 	}
 
 	@PutMapping("/{id}")
-	public Manufacturer modifyManufacturer(@PathVariable Long id, @RequestBody final Manufacturer updatedManufacturer) {
-		updatedManufacturer.setId(id);
-		return manufacturerService.updateManufacturer(updatedManufacturer);
+	public ManufacturerDto modifyManufacturer(@PathVariable Long id,
+			@RequestBody final ManufacturerDto updatedManufacturerDto) {
+
+		updatedManufacturerDto.setId(id);
+		return manufacturerMapper.mapFromEntity(
+				manufacturerService.updateManufacturer(manufacturerMapper.mapFromDto(updatedManufacturerDto)));
 	}
 
 	@DeleteMapping("/{id}")
-	public void removeManufacturer(@PathVariable final Long id) {
-		manufacturerService.deleteManufacturer(id);
+	public void removeManufacturerById(@PathVariable final Long id) {
+		manufacturerService.deleteManufacturerById(id);
 	}
-
 }
