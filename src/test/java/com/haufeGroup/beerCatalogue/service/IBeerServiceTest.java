@@ -2,7 +2,7 @@ package com.haufeGroup.beerCatalogue.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.Assert;
@@ -15,6 +15,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PropertyReferenceException;
 
@@ -43,6 +47,10 @@ public class IBeerServiceTest {
 
 	private static final long UNKNOWN_MANUFACTURER_ID = 11111;
 
+	private static final int PAGE_INDEX = 0;
+
+	private static final int PAGE_SIZE = 3;
+
 	@Mock
 	private BeerRepository beerRepository;
 
@@ -68,21 +76,22 @@ public class IBeerServiceTest {
 	}
 
 	@Test
-	public void getBeerListSortByValidCriteria() {
-		Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
-		Mockito.when(beerRepository.findAll(sortCriteria)).thenReturn(Arrays.asList(createDefaultBeer()));
-		assertThat(testSubject.getBeerListSortByCriteria(sortCriteria))
-				.as("check that a beer list is returned when the sort criteria is valid").isNotEmpty();
+	public void getBeersPaginationWhenSortByValidCriteria() {
+		Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+		Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
+		Mockito.when(beerRepository.findAll(sortPageable)).thenReturn(createDefaultPageEntity());
+		assertThat(testSubject.getAllBeersWithSortPagination(sortPageable))
+				.as("check that a beer page is returned when the page sort criteria is valid").isNotEmpty();
 	}
 
 	@Test
 	public void getBeerListSortByInvalidCriteria() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
-			Mockito.when(beerRepository.findAll(sortCriteria)).thenThrow(PropertyReferenceException.class);
-			testSubject.getBeerListSortByCriteria(sortCriteria);
+			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
+			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
+			Mockito.when(beerRepository.findAll(sortPageable)).thenThrow(PropertyReferenceException.class);
+			testSubject.getAllBeersWithSortPagination(sortPageable);
 		});
-
 	}
 
 	@Test
@@ -214,6 +223,10 @@ public class IBeerServiceTest {
 			Mockito.when(beerRepository.findById(REMOVED_BEER_ID)).thenReturn(Optional.empty());
 			testSubject.deleteBeerById(REMOVED_BEER_ID);
 		});
+	}
+
+	private Page<Beer> createDefaultPageEntity() {
+		return new PageImpl<Beer>(List.of(createDefaultBeer()));
 	}
 
 	private Beer createDefaultModifiedBeer() {

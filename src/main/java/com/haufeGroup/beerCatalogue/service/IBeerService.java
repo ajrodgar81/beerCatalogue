@@ -1,8 +1,7 @@
 package com.haufeGroup.beerCatalogue.service;
 
-import java.util.List;
-
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.haufeGroup.beerCatalogue.model.Beer;
@@ -10,7 +9,7 @@ import com.haufeGroup.beerCatalogue.model.Beer;
 @Service
 public interface IBeerService {
 	
-	public List<Beer> getBeerListSortByCriteria(final Sort sortCriteria);
+	public Page<Beer> getAllBeersWithSortPagination(final Pageable sortPageable);
 
 	public Beer getBeerById(final Long beerId);
 

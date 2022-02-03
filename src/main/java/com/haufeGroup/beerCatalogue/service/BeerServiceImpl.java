@@ -1,9 +1,8 @@
 package com.haufeGroup.beerCatalogue.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +30,9 @@ public class BeerServiceImpl implements IBeerService {
 	private BeerMapper modelMapper;
 
 	@Override
-	public List<Beer> getBeerListSortByCriteria(final Sort sortCriteria) {
+	public Page<Beer> getAllBeersWithSortPagination(final Pageable pagingSort) {
 		try {
-			return beerRepository.findAll(sortCriteria);
+			return beerRepository.findAll(pagingSort);
 		} catch (PropertyReferenceException pre) {
 			throw new BeerServiceException(INVALID_SORT_CRITERIA);
 		} catch (Exception ex) {

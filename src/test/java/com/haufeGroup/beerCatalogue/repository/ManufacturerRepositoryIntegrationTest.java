@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -35,6 +38,10 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	private static final long REMOVED_MANUFACTURER_ID = 2;
 
+	private static final int PAGE_INDEX = 0;
+
+	private static final int ELEMENT_PER_PAGE = 3;
+
 	@Autowired
 	private TestEntityManager entityManager;
 
@@ -46,6 +53,60 @@ public class ManufacturerRepositoryIntegrationTest {
 	@BeforeAll
 	public static void initialize() {
 		sortExtractor = new SortExtractor();
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortByDescendingId() {
+		Page<Manufacturer> foundedManufacturers = testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "id", "desc" }));
+		assertThat(foundedManufacturers.getContent().get(0).getId())
+				.as("check that the retrieved manufacturer page is sorted by descending id order").isEqualTo(4);
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortByAscendingNameAndDescendingId() {
+		Page<Manufacturer> foundedManufacturers = testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "name,asc", "id,desc" }));
+		assertThat(foundedManufacturers.getContent().get(0).getId())
+				.as("check that the retrieved manufacturer page is sorted by ascending name and descending id")
+				.isEqualTo(4);
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationNotReturnsManufacturersMarkedAsDeleted() {
+		Page<Manufacturer> retrievedManufacturers = testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "name,asc", "id,desc" }));
+		retrievedManufacturers.forEach(retrievedBeer -> assertThat(retrievedBeer.getDeleted())
+				.as("check that the retrieved manufacturer page not contains manufacturers marked as deleted")
+				.isFalse());
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortByUnknownField() {
+		Assert.assertThrows(PropertyReferenceException.class,
+				() -> testSubject.findAll(getPageableAccordingToSortCriteria(new String[] { "unknownField", "desc" })));
+
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortForAFieldWithInvalidDirection() {
+		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "name", "unknownDirection" })));
+
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
+		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
+
+	}
+
+	@Test
+	public void findAllManufacturersWithPaginationSortForMultipleFieldsAndAtLeastOneOfThemHasADirectionNotValid() {
+		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+				.findAll(getPageableAccordingToSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
+
 	}
 
 	@Test
@@ -164,5 +225,9 @@ public class ManufacturerRepositoryIntegrationTest {
 		manufacturer.setName("manufacturerName");
 		manufacturer.setNationality("nationality");
 		return manufacturer;
+	}
+
+	private Pageable getPageableAccordingToSortCriteria(final String[] sortCriteria) {
+		return PageRequest.of(PAGE_INDEX, ELEMENT_PER_PAGE, sortExtractor.extractSortCriteria(sortCriteria));
 	}
 }

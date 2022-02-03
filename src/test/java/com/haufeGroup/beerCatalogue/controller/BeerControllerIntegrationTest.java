@@ -16,6 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import com.haufeGroup.beerCatalogue.BeerCatalogueApplication;
 import com.haufeGroup.beerCatalogue.dto.BeerDto;
+import com.haufeGroup.beerCatalogue.testWrappers.BeerDtoPageResponseWrapper;
 
 @SpringBootTest(classes = BeerCatalogueApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/integrationTestData.sql" })
@@ -32,6 +33,8 @@ public class BeerControllerIntegrationTest {
 	private static final long UNKOWN_MANUFACTURER_ID = 1111111;
 
 	private static final long REMOVED_BEER_ID = 2;
+
+	private static final int PAGE_SIZE = 3;
 
 	@Autowired
 	private TestRestTemplate restTemplate;
@@ -72,43 +75,81 @@ public class BeerControllerIntegrationTest {
 	}
 
 	@Test
-	public void getBeerList() {
-		ResponseEntity<BeerDto[]> response = restTemplate.getForEntity(getRootUrl(), BeerDto[].class);
-		assertThat(response.getBody().length).as("check that the beer list is returned").isGreaterThan(0);
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPagination() {
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate.getForEntity(getRootUrl(),
+				BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent()).as("check that a beer list is returned in the page").isNotEmpty();
 	}
 
 	@Test
-	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortListTestData.sql" })
-	public void getBeerListWhenSortCriteriaIsNotProvidedThenTheRelatedListIsSortedByDescendingId() {
-		ResponseEntity<BeerDto[]> response = restTemplate.getForEntity(getRootUrl(), BeerDto[].class);
-		assertThat(response.getBody()[0].getId()).as("check that the returned beer list is sorted by default criteria")
-				.isEqualTo(7);
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationWhenTheResultIsMoreThanTheSpecifiedPageSize() {
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate
+				.getForEntity(getRootUrl() + "/?page=1&size=" + PAGE_SIZE, BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent()).as("check that a beer list is returned in the requested page")
+				.isNotEmpty();
+	}
+
+	@Test
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationWhenPageSizeIsSpecified() {
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate
+				.getForEntity(getRootUrl() + "/?page=1&size=" + PAGE_SIZE, BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent().size())
+				.as("check that the number of elements returned in the page is according to the page size")
+				.isLessThanOrEqualTo(PAGE_SIZE);
+	}
+
+	@Test
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationWhenBothPageAndSortCriteriaAreSpecified() {
+		String pageCriteria = "/?page=1&size=" + PAGE_SIZE;
+		String sortCriteria = "&sort=name&sort=desc";
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate
+				.getForEntity(getRootUrl() + pageCriteria + sortCriteria, BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent()).as("check that a beer list is returned in the requested page")
+				.isNotEmpty();
+	}
+
+	@Test
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationWhenSortCriteriaIsNotProvidedThenPagesAreSortedByDescendingId() {
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate.getForEntity(getRootUrl(),
+				BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent().get(0).getId())
+				.as("check that the beer list returned in the page is sorted by default criteria").isEqualTo(7);
 	}
 
 	@Test
 	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/removedManufacturerCase.sql" })
-	public void getBeerListNotReturnsBeersMarkedAsDeletedInDatabase() {
-		ResponseEntity<BeerDto[]> response = restTemplate.getForEntity(getRootUrl(), BeerDto[].class);
-		assertThat(response.getBody()[0].getId())
-				.as("check that the returned beer list not contains beers marked as deleted in database").isOne();
+	public void getBeersWithSortPaginationNotReturnsBeersMarkedAsDeletedInDatabase() {
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate.getForEntity(getRootUrl(),
+				BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent().get(0).getId())
+				.as("check that the beer list returned in the page not contains beers marked as deleted in database")
+				.isOne();
 	}
 
 	@Test
-	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortListTestData.sql" })
-	public void getBeerListWhenSortByDescendingName() {
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationWhenSortByDescendingName() {
 		String sortCriteria = "?sort=name&sort=desc";
-		ResponseEntity<BeerDto[]> response = restTemplate.getForEntity(getRootUrl() + sortCriteria, BeerDto[].class);
-		assertThat(response.getBody()[0].getId()).as("check that the returned beer list is sorted by descending name")
-				.isEqualTo(1);
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate.getForEntity(getRootUrl() + sortCriteria,
+				BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent().get(0).getId())
+				.as("check that the beer list returned in the page is sorted by descending name").isEqualTo(1);
 	}
 
 	@Test
-	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortListTestData.sql" })
-	public void getBeerListSortByAscendingNameAndAscendingId() {
+	@Sql({ "/scripts/controllers/clearData.sql", "/scripts/controllers/sortPaginationTestData.sql" })
+	public void getBeersWithSortPaginationSortByAscendingNameAndAscendingId() {
 		String sortCriteria = "?sort=name, asc&sort=id, asc";
-		ResponseEntity<BeerDto[]> response = restTemplate.getForEntity(getRootUrl() + sortCriteria, BeerDto[].class);
-		assertThat(response.getBody()[0].getId())
-				.as("check that the returned beer list is sorted by ascending name and ascending id").isEqualTo(3);
+		ResponseEntity<BeerDtoPageResponseWrapper> response = restTemplate.getForEntity(getRootUrl() + sortCriteria,
+				BeerDtoPageResponseWrapper.class);
+		assertThat(response.getBody().getContent().get(0).getId())
+				.as("check that the beer list returned in the page is sorted by ascending name and ascending id")
+				.isEqualTo(3);
 	}
 
 	@Test

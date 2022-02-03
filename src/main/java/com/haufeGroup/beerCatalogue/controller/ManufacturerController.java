@@ -1,8 +1,9 @@
 package com.haufeGroup.beerCatalogue.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,22 +38,25 @@ public class ManufacturerController {
 	SortExtractor sortExtractor;
 
 	@GetMapping("/")
-	public List<ManufacturerDto> getManufacturerListSortByUserCriteria(
-			@RequestParam(defaultValue = "id,desc") String[] sort) {
-		return manufacturerMapper.mapFromEntityList(
-				manufacturerService.getManufacturerListSortByCriteria(sortExtractor.extractSortCriteria(sort)));
+	public Page<ManufacturerDto> getAllManufacturesWithSortPagination(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "5") int size, @RequestParam(defaultValue = "id,desc") String[] sort) {
+		Pageable pagingSort = PageRequest.of(page, size, sortExtractor.extractSortCriteria(sort));
+		return manufacturerMapper
+				.mapFromEntityPage(manufacturerService.getAllManufacturesWithSortPagination(pagingSort), pagingSort);
 	}
 
 	@GetMapping("/{id}")
-	public ManufacturerDto getManufacturer(@PathVariable Long id) {
+	public ManufacturerDto getManufacturerById(@PathVariable Long id) {
 		return manufacturerMapper.mapFromEntity(manufacturerService.getManufacturerById(id));
 	}
 
-	@GetMapping("/{id}/beerList")
-	public List<BeerDto> getBeerListSortByCriteria(@PathVariable(name = "id") Long manufacturerId,
+	@GetMapping("/{id}/beers")
+	public Page<BeerDto> getManufacturerBeersWithSortPagination(@PathVariable(name = "id") Long manufacturerId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size,
 			@RequestParam(defaultValue = "id,desc") String[] sort) {
-		return beerMapper.mapFromEntityList(manufacturerService
-				.getBeerListSortByCriteria(manufacturerId, sortExtractor.extractSortCriteria(sort)));
+		Pageable pagingSort = PageRequest.of(page, size, sortExtractor.extractSortCriteria(sort));
+		return beerMapper.mapFromEntityPage(
+				manufacturerService.getManufacturerBeersWithSortPagination(manufacturerId, pagingSort), pagingSort);
 	}
 
 	@PostMapping("/")
@@ -64,7 +68,6 @@ public class ManufacturerController {
 	@PutMapping("/{id}")
 	public ManufacturerDto modifyManufacturer(@PathVariable Long id,
 			@RequestBody final ManufacturerDto updatedManufacturerDto) {
-
 		updatedManufacturerDto.setId(id);
 		return manufacturerMapper.mapFromEntity(
 				manufacturerService.updateManufacturer(manufacturerMapper.mapFromDto(updatedManufacturerDto)));

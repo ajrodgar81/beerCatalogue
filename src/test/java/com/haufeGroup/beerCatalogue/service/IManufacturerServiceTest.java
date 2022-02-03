@@ -16,6 +16,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PropertyReferenceException;
 
@@ -35,6 +39,10 @@ public class IManufacturerServiceTest {
 	private static final long REMOVED_MANUFACTURER_ID = 2;
 
 	private static final long UNKNOWN_MANUFACTURER_ID = 11111;
+
+	private static final int PAGE_INDEX = 0;
+
+	private static final int PAGE_SIZE = 3;
 
 	@Mock
 	private ManufacturerRepository manufacturerRepository;
@@ -61,59 +69,79 @@ public class IManufacturerServiceTest {
 	}
 
 	@Test
-	public void getManufacturerListSortByValidCriteria() {
-		Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
-		Mockito.when(manufacturerRepository.findAll(sortCriteria))
-				.thenReturn(Arrays.asList(createDefaultManufacturer()));
-		assertThat(testSubject.getManufacturerListSortByCriteria(sortCriteria))
-				.as("check that a manufacturer list is returned when the sort criteria is valid").isNotEmpty();
+	public void getAllManufacturersWithSortPaginationWhenTheRelatedSortCriteriaIsValid() {
+		Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+		Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
+		Mockito.when(manufacturerRepository.findAll(sortPageable)).thenReturn(createDefaultManufacturerPage());
+		assertThat(testSubject.getAllManufacturesWithSortPagination(sortPageable))
+				.as("check that a manufacturer page is returned when the page sort criteria is valid").isNotEmpty();
 	}
 
 	@Test
-	public void getManufacturerListSortByInvalidCriteria() {
+	public void getAllManufacturersWithSortPaginationWhenTheRelatedSortCriteriaIsInvalid() {
 		Assert.assertThrows(ManufacturerServiceException.class, () -> {
-			Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
-			Mockito.when(manufacturerRepository.findAll(sortCriteria)).thenThrow(PropertyReferenceException.class);
-			testSubject.getManufacturerListSortByCriteria(sortCriteria);
+			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
+			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
+			Mockito.when(manufacturerRepository.findAll(sortPageable)).thenThrow(PropertyReferenceException.class);
+			testSubject.getAllManufacturesWithSortPagination(sortPageable);
 		});
-
 	}
 
 	@Test
-	public void getManufacturerBeerListSortByValidCriteriaWhenTheManufacturerExists() {
-		Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerExistsAndTheSortCriteriaIsValid() {
+		Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+		Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
 		Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
-		Mockito.when(beerRepository.findByManufacturerId(KNOWN_MANUFACTURER_ID, sortCriteria))
-				.thenReturn(createDeafaultBeerList());
-		assertThat(testSubject.getBeerListSortByCriteria(KNOWN_MANUFACTURER_ID, sortCriteria)).as(
-				"check that the beer manufacturer list is returned when the sort criteria is valid and the related manufacturer exists")
+		Mockito.when(beerRepository.findByManufacturerId(KNOWN_MANUFACTURER_ID, sortPageable))
+				.thenReturn(createDefaultBeerPage());
+		assertThat(testSubject.getManufacturerBeersWithSortPagination(KNOWN_MANUFACTURER_ID, sortPageable)).as(
+				"check that the beer page of the related manufacturer is returned when the manufacturer exists and the page sort criteria is valid")
 				.isNotEmpty();
 	}
 
 	@Test
-	public void getManufacturerBeerListSortByValidCriteriaWhenTheManufacturerNotExists() {
+	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerNotExists() {
 		Assert.assertThrows(ManufacturerServiceException.class, () -> {
-			Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
-			testSubject.getBeerListSortByCriteria(UNKNOWN_MANUFACTURER_ID, sortCriteria);
+			Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
+			Mockito.when(manufacturerRepository.existsById(UNKNOWN_MANUFACTURER_ID)).thenReturn(false);
+			testSubject.getManufacturerBeersWithSortPagination(UNKNOWN_MANUFACTURER_ID, sortPageable);
 		});
 	}
 
 	@Test
-	public void getManufacturerBeerListSortByValidCriteriaWhenTheManufacturerIsMarkedAsDeleted() {
+	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerIsMarkedAsDeleted() {
 		Assert.assertThrows(ManufacturerServiceException.class, () -> {
-			Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
-			testSubject.getBeerListSortByCriteria(REMOVED_MANUFACTURER_ID, sortCriteria);
+			Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
+			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
+			Mockito.when(manufacturerRepository.existsById(REMOVED_MANUFACTURER_ID)).thenReturn(false);
+			testSubject.getManufacturerBeersWithSortPagination(REMOVED_MANUFACTURER_ID, sortPageable);
 		});
 	}
 
 	@Test
-	public void getManufacturerBeerListSortByInvalidCriteria() {
+	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerExistsButTheSortCriteriaIsInvalid() {
 		Assert.assertThrows(ManufacturerServiceException.class, () -> {
-			Sort sortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
-			Mockito.when(manufacturerRepository.findAll(sortCriteria)).thenThrow(PropertyReferenceException.class);
-			testSubject.getManufacturerListSortByCriteria(sortCriteria);
+			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
+			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
+			Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
+			Mockito.when(beerRepository.findByManufacturerId(KNOWN_MANUFACTURER_ID, sortPageable))
+					.thenThrow(PropertyReferenceException.class);
+			testSubject.getManufacturerBeersWithSortPagination(KNOWN_MANUFACTURER_ID, sortPageable);
 		});
 
+	}
+
+	@Test
+	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerExistsButNoBeersWereFound() {
+		Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
+		Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
+		Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
+		Mockito.when(beerRepository.findByManufacturerId(KNOWN_MANUFACTURER_ID, sortPageable)).thenReturn(Page.empty());
+		assertThat(testSubject.getManufacturerBeersWithSortPagination(KNOWN_MANUFACTURER_ID, sortPageable))
+				.as("check that an empty beer page is returned when no beers were found for the related manufacturer")
+				.isEmpty();
+		testSubject.getManufacturerBeersWithSortPagination(KNOWN_MANUFACTURER_ID, sortPageable);
 	}
 
 	@Test
@@ -196,6 +224,14 @@ public class IManufacturerServiceTest {
 			Mockito.when(manufacturerRepository.findById(REMOVED_MANUFACTURER_ID)).thenReturn(Optional.empty());
 			testSubject.deleteManufacturerById(REMOVED_MANUFACTURER_ID);
 		});
+	}
+
+	private Page<Beer> createDefaultBeerPage() {
+		return new PageImpl<Beer>(createDeafaultBeerList());
+	}
+
+	private Page<Manufacturer> createDefaultManufacturerPage() {
+		return new PageImpl<Manufacturer>(List.of(createDefaultManufacturer()));
 	}
 
 	private Manufacturer createDefaultModifiedManufacturer() {

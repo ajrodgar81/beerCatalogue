@@ -1,8 +1,9 @@
 package com.haufeGroup.beerCatalogue.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,9 +33,10 @@ public class BeerController {
 	SortExtractor sortExtractor;
 
 	@GetMapping("/")
-	public List<BeerDto> getBeersSortedByUserCriteria(@RequestParam(defaultValue = "id,desc") String[] sort) {
-		return modelMapper
-				.mapFromEntityList(beerService.getBeerListSortByCriteria(sortExtractor.extractSortCriteria(sort)));
+	public Page<BeerDto> getAllBeersWithSortPagination(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "5") int size, @RequestParam(defaultValue = "id,desc") String[] sort) {
+		Pageable pagingSort = PageRequest.of(page, size, sortExtractor.extractSortCriteria(sort));
+		return modelMapper.mapFromEntityPage(beerService.getAllBeersWithSortPagination(pagingSort), pagingSort);
 	}
 
 	@GetMapping("/{id}")

@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.haufeGroup.beerCatalogue.dto.BeerDto;
@@ -17,24 +20,28 @@ public class BeerMapper {
 
 	private ModelMapper modelMapper;
 
-	public Beer mapFromDto(BeerDto beerDto) {
+	public Beer mapFromDto(final BeerDto beerDto) {
 		return getModelMapper().map(beerDto, Beer.class);
 	}
 
-	public BeerDto mapFromEntity(Beer beer) {
-		return getModelMapper().map(beer, BeerDto.class);
+	public BeerDto mapFromEntity(final Beer entity) {
+		return getModelMapper().map(entity, BeerDto.class);
 	}
 
-	public void mergeEntity(Beer sourceEntity, Beer targetEntity) {
+	public void mergeEntity(final Beer sourceEntity, final Beer targetEntity) {
 		getModelMapper().map(sourceEntity, targetEntity);
 	}
 
-	public List<BeerDto> mapFromEntityList(List<Beer> beerList) {
-		return beerList.stream().map(beer -> mapFromEntity(beer)).collect(Collectors.toList());
+	public List<BeerDto> mapFromEntityList(final List<Beer> entityList) {
+		return entityList.stream().map(entity -> mapFromEntity(entity)).collect(Collectors.toList());
+	}
+
+	public Page<BeerDto> mapFromEntityPage(final Page<Beer> entityPage, final Pageable sortPageable) {
+		return new PageImpl<BeerDto>(mapFromEntityList(entityPage.getContent()), sortPageable,
+				entityPage.getTotalElements());
 	}
 
 	private ModelMapper getModelMapper() {
-
 		if (modelMapper == null) {
 			modelMapper = new ModelMapper();
 			this.modelMapper.getConfiguration().setSkipNullEnabled(true);
@@ -63,23 +70,23 @@ public class BeerMapper {
 	private void addConverterFromDtoToEntity() {
 		TypeMap<BeerDto, Beer> propertyMapper = this.modelMapper.createTypeMap(BeerDto.class, Beer.class);
 		Converter<BeerDto, Beer> beerDtoToBeer = src -> {
-			Beer beer = new Beer();
-			beer.setId(src.getSource().getId());
-			beer.setName(src.getSource().getName());
-			beer.setDescription(src.getSource().getDescription());
-			beer.setGraduation(src.getSource().getGraduation());
-			beer.setType(src.getSource().getType());
-			mapManufacturerFromDto(src.getSource(), beer);
-			return beer;
+			Beer entity = new Beer();
+			entity.setId(src.getSource().getId());
+			entity.setName(src.getSource().getName());
+			entity.setDescription(src.getSource().getDescription());
+			entity.setGraduation(src.getSource().getGraduation());
+			entity.setType(src.getSource().getType());
+			mapManufacturerFromDto(src.getSource(), entity);
+			return entity;
 		};
 		propertyMapper.setConverter(beerDtoToBeer);
 	}
 
-	private void mapManufacturerFromDto(BeerDto source, Beer beer) {
+	private void mapManufacturerFromDto(final BeerDto source, final Beer entity) {
 		if (source.getManufacturerId() != null) {
 			Manufacturer manufacturer = new Manufacturer();
 			manufacturer.setId(source.getManufacturerId());
-			beer.setManufacturer(manufacturer);
+			entity.setManufacturer(manufacturer);
 		}
 	}
 
