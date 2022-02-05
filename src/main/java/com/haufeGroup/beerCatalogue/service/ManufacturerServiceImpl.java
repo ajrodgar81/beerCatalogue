@@ -1,10 +1,15 @@
 package com.haufeGroup.beerCatalogue.service;
 
+import java.util.NoSuchElementException;
+
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.haufeGroup.beerCatalogue.exception.ManufacturerServiceException;
 import com.haufeGroup.beerCatalogue.mapper.ManufacturerMapper;
@@ -14,10 +19,14 @@ import com.haufeGroup.beerCatalogue.repository.BeerRepository;
 import com.haufeGroup.beerCatalogue.repository.ManufacturerRepository;
 
 @Service
+@Validated
 public class ManufacturerServiceImpl implements IManufacturerService {
 
 	public static final String MANUFACTURER_NOT_FOUND_ERROR_MESSAGE = "the id provided not belongs to existing manufacturer.";
+
 	public static final String INVALID_SORT_CRITERIA = "The sort criteria provided is not valid. Please check that the field exists and the provided order value is asc or desc.";
+
+	public static final String ADD_EXISTING_MANUFACTURER_ERROR_MESSAGE = "it's not possible create a manufacturer that already exists.";
 
 	@Autowired
 	ManufacturerRepository manufacturerRepository;
@@ -29,7 +38,7 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 	ManufacturerMapper modelMapper;
 
 	@Override
-	public Page<Manufacturer> getAllManufacturesWithSortPagination(final Pageable sortPageable) {
+	public Page<Manufacturer> getAllManufacturesWithSortPagination(@NotNull final Pageable sortPageable) {
 		try {
 			return manufacturerRepository.findAll(sortPageable);
 		} catch (PropertyReferenceException pre) {
@@ -38,12 +47,17 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 	}
 
 	@Override
-	public Manufacturer getManufacturerById(final Long manufacturerId) {
-		return manufacturerRepository.findById(manufacturerId).orElseThrow(ManufacturerServiceException::new);
+	public Manufacturer getManufacturerById(@NotNull final Long manufacturerId) {
+		if (manufacturerRepository.existsById(manufacturerId)) {
+			return manufacturerRepository.findById(manufacturerId).get();
+		} else {
+			throw new ManufacturerServiceException(MANUFACTURER_NOT_FOUND_ERROR_MESSAGE);
+		}
 	}
 
 	@Override
-	public Page<Beer> getManufacturerBeersWithSortPagination(final Long manufacturerId, final Pageable sortPageable) {
+	public Page<Beer> getManufacturerBeersWithSortPagination(@NotNull final Long manufacturerId,
+			@NotNull final Pageable sortPageable) {
 		checkThatManufacturerExists(manufacturerId);
 		try {
 			return beerRepository.findByManufacturerId(manufacturerId, sortPageable);
@@ -52,27 +66,36 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 		}
 	}
 
+	@Override
+	public Manufacturer addNewManufacturer(@NotNull final Manufacturer newManufacturer) {
+		if (newManufacturer.getId() == null || !manufacturerRepository.existsById(newManufacturer.getId())) {
+			return manufacturerRepository.save(newManufacturer);
+		}
+		throw new ManufacturerServiceException(ADD_EXISTING_MANUFACTURER_ERROR_MESSAGE);
+	}
+
+	@Override
+	public Manufacturer updateManufacturer(@NotNull final Manufacturer manufacturerToModify) {
+		try {
+			Manufacturer oldManufacturer = manufacturerRepository.findById(manufacturerToModify.getId()).orElseThrow();
+			modelMapper.mergeEntity(manufacturerToModify, oldManufacturer);
+			return manufacturerRepository.save(oldManufacturer);
+		} catch (NoSuchElementException nsee) {
+			throw new ManufacturerServiceException(MANUFACTURER_NOT_FOUND_ERROR_MESSAGE);
+		} catch (Exception ex) {
+			throw new ManufacturerServiceException(ex.getMessage());
+		}
+	}
+
+	@Override
+	public void deleteManufacturerById(@NotNull final Long manufacturerId) {
+		checkThatManufacturerExists(manufacturerId);
+		manufacturerRepository.deleteById(manufacturerId);
+	}
+
 	private void checkThatManufacturerExists(final Long manufacturerId) {
 		if (!manufacturerRepository.existsById(manufacturerId)) {
 			throw new ManufacturerServiceException(MANUFACTURER_NOT_FOUND_ERROR_MESSAGE);
 		}
 	}
-
-	@Override
-	public Manufacturer addManufacturer(final Manufacturer newManufacturer) {
-		return manufacturerRepository.save(newManufacturer);
-	}
-
-	@Override
-	public Manufacturer updateManufacturer(final Manufacturer manufacturerToModify) {
-		Manufacturer oldManufacturer = getManufacturerById(manufacturerToModify.getId());
-		modelMapper.mergeEntity(manufacturerToModify, oldManufacturer);
-		return manufacturerRepository.save(oldManufacturer);
-	}
-
-	@Override
-	public void deleteManufacturerById(final Long manufacturerId) {
-		manufacturerRepository.delete(getManufacturerById(manufacturerId));
-	}
-
 }

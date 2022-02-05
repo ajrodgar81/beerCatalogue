@@ -3,8 +3,7 @@ package com.haufeGroup.beerCatalogue.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-
-import javax.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 
 import org.assertj.core.api.Fail;
 import org.junit.Assert;
@@ -166,22 +165,22 @@ public class ManufacturerRepositoryIntegrationTest {
 	@Test
 	public void getByIdAnExistingManufacturer() {
 		try {
-			testSubject.findById(KNOWN_MANUFACTURER_ID).orElseThrow(EntityNotFoundException::new);
-		} catch (EntityNotFoundException enfe) {
+			testSubject.findById(KNOWN_MANUFACTURER_ID).orElseThrow();
+		} catch (NoSuchElementException nsee) {
 			Fail.fail("manufacturer not found");
 		}
 	}
 
 	@Test
 	public void getByIdAnUnknownManufacturer() {
-		Assert.assertThrows(EntityNotFoundException.class,
-				() -> testSubject.findById(UNKNOWN_MANUFACTURER_ID).orElseThrow(EntityNotFoundException::new));
+		Assert.assertThrows(NoSuchElementException.class,
+				() -> testSubject.findById(UNKNOWN_MANUFACTURER_ID).orElseThrow());
 	}
 
 	@Test
 	public void getByIdAManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(EntityNotFoundException.class,
-				() -> testSubject.findById(REMOVED_MANUFACTURER_ID).orElseThrow(EntityNotFoundException::new));
+		Assert.assertThrows(NoSuchElementException.class,
+				() -> testSubject.findById(REMOVED_MANUFACTURER_ID).orElseThrow());
 	}
 
 	@Test
@@ -193,8 +192,7 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	@Test
 	public void updateManufacturer() {
-		Manufacturer oldManufacturer = testSubject.findById(KNOWN_MANUFACTURER_ID)
-				.orElseThrow(EntityNotFoundException::new);
+		Manufacturer oldManufacturer = testSubject.findById(KNOWN_MANUFACTURER_ID).orElseThrow();
 		oldManufacturer.setNationality("updatedNationalty");
 		Manufacturer updatedManufacturer = testSubject.save(oldManufacturer);
 		assertThat(entityManager.find(Manufacturer.class, KNOWN_MANUFACTURER_ID))

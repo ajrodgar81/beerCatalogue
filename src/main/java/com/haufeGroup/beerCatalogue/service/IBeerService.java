@@ -1,22 +1,22 @@
 package com.haufeGroup.beerCatalogue.service;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import com.haufeGroup.beerCatalogue.model.Beer;
 
-@Service
 public interface IBeerService {
-	
-	public Page<Beer> getAllBeersWithSortPagination(final Pageable sortPageable);
 
-	public Beer getBeerById(final Long beerId);
+	public Page<Beer> getAllBeersWithSortPagination(@NotNull final Pageable sortPageable);
 
-	public Beer addBeer(final Beer newBeer);
+	public Beer getBeerById(@NotNull final Long beerId);
 
-	public Beer updateBeer(final Beer beerToModify);
+	public Beer addNewBeer(@NotNull final Beer newBeer);
 
-	public void deleteBeerById(final Long beerId);
+	public Beer updateBeer(@NotNull final Beer beerToModify);
+
+	public void deleteBeerById(@NotNull final Long beerId);
 
 }

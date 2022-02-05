@@ -1,5 +1,7 @@
 package com.haufeGroup.beerCatalogue.service;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,16 +10,17 @@ import com.haufeGroup.beerCatalogue.model.Manufacturer;
 
 public interface IManufacturerService {
 
-	public Page<Manufacturer> getAllManufacturesWithSortPagination(final Pageable sortPageable);
+	public Page<Manufacturer> getAllManufacturesWithSortPagination(@NotNull final Pageable sortPageable);
 
-	public Manufacturer getManufacturerById(final Long manufacturerId);
+	public Manufacturer getManufacturerById(@NotNull final Long manufacturerId);
 
-	public Page<Beer> getManufacturerBeersWithSortPagination(final Long manufacturerId, final Pageable sortPageable);
+	public Page<Beer> getManufacturerBeersWithSortPagination(@NotNull final Long manufacturerId,
+			@NotNull final Pageable sortPageable);
 
-	public Manufacturer addManufacturer(final Manufacturer newManufacturer);
+	public Manufacturer addNewManufacturer(@NotNull final Manufacturer newManufacturer);
 
-	public Manufacturer updateManufacturer(final Manufacturer manufacturerToModify);
+	public Manufacturer updateManufacturer(@NotNull final Manufacturer manufacturerToModify);
 
-	public void deleteManufacturerById(final Long manufacturerId);
+	public void deleteManufacturerById(@NotNull final Long manufacturerId);
 
 }

@@ -5,22 +5,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.ConstraintViolationException;
+
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.haufeGroup.beerCatalogue.exception.BeerServiceException;
 import com.haufeGroup.beerCatalogue.mapper.BeerMapper;
@@ -30,7 +31,8 @@ import com.haufeGroup.beerCatalogue.repository.BeerRepository;
 import com.haufeGroup.beerCatalogue.repository.ManufacturerRepository;
 import com.haufeGroup.beerCatalogue.util.SortExtractor;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 public class IBeerServiceTest {
 
 	private static final long KNOWN_BEER_ID = 1;
@@ -51,17 +53,17 @@ public class IBeerServiceTest {
 
 	private static final int PAGE_SIZE = 3;
 
-	@Mock
+	@MockBean
 	private BeerRepository beerRepository;
 
-	@Mock
+	@MockBean
 	private BeerMapper modelMapper;
 
-	@Mock
+	@MockBean
 	private ManufacturerRepository manufacturerRepository;
 
-	@InjectMocks
-	private IBeerService testSubject = new BeerServiceImpl();
+	@Autowired
+	private IBeerService testSubject;
 
 	private static SortExtractor sortExtractor;
 
@@ -70,13 +72,8 @@ public class IBeerServiceTest {
 		sortExtractor = new SortExtractor();
 	}
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		MockitoAnnotations.openMocks(this);
-	}
-
 	@Test
-	public void getBeersPaginationWhenSortByValidCriteria() {
+	public void getAllBeersWithSortPaginationWhenSortByValidCriteria() {
 		Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
 		Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
 		Mockito.when(beerRepository.findAll(sortPageable)).thenReturn(createDefaultPageEntity());
@@ -85,7 +82,7 @@ public class IBeerServiceTest {
 	}
 
 	@Test
-	public void getBeerListSortByInvalidCriteria() {
+	public void getAllBeersWithSortPaginationWhenSortByInvalidCriteria() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
@@ -95,7 +92,13 @@ public class IBeerServiceTest {
 	}
 
 	@Test
+	public void getAllBeersWithSortPaginationWhenTheSortPaginationCriteriaProvidedIsNull() {
+		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.getAllBeersWithSortPagination(null));
+	}
+
+	@Test
 	public void getBeerByIdWhenTheIdBelongsToExistingBeer() {
+		Mockito.when(beerRepository.existsById(KNOWN_BEER_ID)).thenReturn(true);
 		Mockito.when(beerRepository.findById(KNOWN_BEER_ID)).thenReturn(Optional.of(createDefaultBeer()));
 		assertThat(testSubject.getBeerById(KNOWN_BEER_ID)).as("check that the beer is returned")
 				.isEqualTo(createDefaultBeer());
@@ -104,7 +107,7 @@ public class IBeerServiceTest {
 	@Test
 	public void getBeerByIdWhenTheIdBelongsToNonExistingBeer() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Mockito.when(beerRepository.findById(UNKNOWN_BEER_ID)).thenReturn(Optional.empty());
+			Mockito.when(beerRepository.existsById(UNKNOWN_BEER_ID)).thenReturn(false);
 			testSubject.getBeerById(UNKNOWN_BEER_ID);
 		});
 	}
@@ -112,53 +115,60 @@ public class IBeerServiceTest {
 	@Test
 	public void getBeerByIdWhenTheIdBelongsToBeerMarkedAsDeleted() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Mockito.when(beerRepository.findById(REMOVED_BEER_ID)).thenReturn(Optional.empty());
+			Mockito.when(beerRepository.existsById(REMOVED_BEER_ID)).thenReturn(false);
 			testSubject.getBeerById(REMOVED_BEER_ID);
 		});
 	}
 
 	@Test
-	public void addNewBeerToExistingManufacturer() {
-		Beer newBear = createDefaultBeerWithoutId();
-		Beer savedBeer = createDefaultBeer();
-		newBear.getManufacturer().setId(KNOWN_MANUFACTURER_ID);
-		Mockito.when(manufacturerRepository.findById(KNOWN_MANUFACTURER_ID))
-				.thenReturn(Optional.of(newBear.getManufacturer()));
-		Mockito.when(beerRepository.save(newBear)).thenReturn(savedBeer);
-		assertThat(testSubject.addBeer(newBear)).as("check that the beer was created").isEqualTo(savedBeer);
+	public void getBeerByIdWhenTheIdIsNull() {
+		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.getBeerById(null));
 	}
 
 	@Test
-	public void addNewBeerToNonExistingManufacturer() {
+	public void addNewBeerWhenTheNewBeerNotExistsAndTheManufacturerExists() {
+		Beer newBear = createDefaultBeerWithoutId();
+		Beer savedBeer = createDefaultBeer();
+		Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
+		Mockito.when(beerRepository.save(newBear)).thenReturn(savedBeer);
+		assertThat(testSubject.addNewBeer(newBear)).as("check that the beer was created").isEqualTo(savedBeer);
+	}
+
+	@Test
+	public void addNewBeerWhenTheNewBeerNotExistsAndTheManufacturerNotExists() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Beer newBear = createDefaultBeerWithoutId();
 			newBear.getManufacturer().setId(UNKNOWN_MANUFACTURER_ID);
-			Mockito.when(manufacturerRepository.findById(UNKNOWN_MANUFACTURER_ID)).thenReturn(Optional.empty());
-			testSubject.addBeer(newBear);
+			Mockito.when(manufacturerRepository.existsById(UNKNOWN_MANUFACTURER_ID)).thenReturn(false);
+			testSubject.addNewBeer(newBear);
 		});
 	}
 
 	@Test
-	public void addNewBeerToManufacturerMarkedAsDeleted() {
+	public void addNewBeerWhenTheNewBeerNotExistsAndTheManufacturerIsMarkedAsDeleted() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Beer newBear = createDefaultBeerWithoutId();
 			newBear.getManufacturer().setId(REMOVED_MANUFACTURER_ID);
-			Mockito.when(manufacturerRepository.findById(REMOVED_MANUFACTURER_ID)).thenReturn(Optional.empty());
-			testSubject.addBeer(newBear);
+			Mockito.when(manufacturerRepository.existsById(REMOVED_MANUFACTURER_ID)).thenReturn(false);
+			testSubject.addNewBeer(newBear);
 		});
 	}
 
 	@Test
-	public void addNewBeerWhenTheManufacturerIsNotProvided() {
+	public void addNewBeerWhenTheNewBeerAlreadyExists() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Beer newBear = createDefaultBeerWithoutId();
-			newBear.setManufacturer(null);
-			testSubject.addBeer(newBear);
+			Mockito.when(beerRepository.existsById(KNOWN_BEER_ID)).thenReturn(true);
+			testSubject.addNewBeer(createDefaultBeer());
 		});
 	}
 
 	@Test
-	public void modifyABeerThatExists() {
+	public void addNewBeerWhenTheNewBeerIsNull() {
+		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.addNewBeer(null));
+	}
+
+	@Test
+	public void updateABeerThatExists() {
 		Beer oldBeer = createDefaultBeer();
 		Beer beerToModify = createDefaultModifiedBeer();
 		Mockito.when(beerRepository.findById(beerToModify.getId())).thenReturn(Optional.of(oldBeer));
@@ -168,7 +178,7 @@ public class IBeerServiceTest {
 	}
 
 	@Test
-	public void modifyABeerThatNotExists() {
+	public void updateABeerThatNotExists() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Mockito.when(beerRepository.findById(UNKNOWN_BEER_ID)).thenReturn(Optional.empty());
 			Beer beerToModify = createDefaultBeerWithoutId();
@@ -179,7 +189,7 @@ public class IBeerServiceTest {
 	}
 
 	@Test
-	public void modifyABeerMarkedAsDeleted() {
+	public void updateABeerMarkedAsDeleted() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Mockito.when(beerRepository.findById(REMOVED_BEER_ID)).thenReturn(Optional.empty());
 			Beer beerToModify = createDefaultBeerWithoutId();
@@ -190,7 +200,7 @@ public class IBeerServiceTest {
 	}
 
 	@Test
-	public void modifyManufacturerOfExistingBeer() {
+	public void updateManufacturerOfExistingBeer() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
 			Beer oldBeer = createDefaultBeer();
 			oldBeer.getManufacturer().setId(KNOWN_MANUFACTURER_ID);
@@ -202,17 +212,21 @@ public class IBeerServiceTest {
 	}
 
 	@Test
+	public void updateABeerWhenTheBeerToModifyIsNull() {
+		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.updateBeer(null));
+	}
+
+	@Test
 	public void deleteBeerByIdWhenTheIdBelongsToExistingBeer() {
-		Beer oldBeer = createDefaultBeer();
-		Mockito.when(beerRepository.findById(oldBeer.getId())).thenReturn(Optional.of(oldBeer));
-		testSubject.deleteBeerById(oldBeer.getId());
-		Mockito.verify(beerRepository).delete(oldBeer);
+		Mockito.when(beerRepository.existsById(KNOWN_BEER_ID)).thenReturn(true);
+		testSubject.deleteBeerById(KNOWN_BEER_ID);
+		Mockito.verify(beerRepository).deleteById(KNOWN_BEER_ID);
 	}
 
 	@Test
 	public void deleteBeerByIdWhenTheIdBelongsToNonExistingBeer() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Mockito.when(beerRepository.findById(UNKNOWN_BEER_ID)).thenReturn(Optional.empty());
+			Mockito.when(beerRepository.existsById(UNKNOWN_BEER_ID)).thenReturn(false);
 			testSubject.deleteBeerById(UNKNOWN_BEER_ID);
 		});
 	}
@@ -220,9 +234,14 @@ public class IBeerServiceTest {
 	@Test
 	public void deleteBeerByIdWhenTheIdBelongsToBeerMarkedAsDeleted() {
 		Assert.assertThrows(BeerServiceException.class, () -> {
-			Mockito.when(beerRepository.findById(REMOVED_BEER_ID)).thenReturn(Optional.empty());
+			Mockito.when(beerRepository.existsById(REMOVED_BEER_ID)).thenReturn(false);
 			testSubject.deleteBeerById(REMOVED_BEER_ID);
 		});
+	}
+
+	@Test
+	public void deleteBeerByIdWhenTheIsNull() {
+		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.deleteBeerById(null));
 	}
 
 	private Page<Beer> createDefaultPageEntity() {

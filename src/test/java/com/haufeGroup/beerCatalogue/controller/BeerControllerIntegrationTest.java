@@ -57,14 +57,14 @@ public class BeerControllerIntegrationTest {
 	public void getBeerByIdWhenIdBelongsToBeerMarkedAsDeletedInDatabase() {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + REMOVED_BEER_ID, String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
 	public void getBeerByIdWhenTheIdBelongsToUnkownBeer() {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + UNKOWN_BEER_ID, String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -161,8 +161,16 @@ public class BeerControllerIntegrationTest {
 
 	@Test
 	public void addANewBeerToUnknownManufacturer() {
-		ResponseEntity<BeerDto> response = restTemplate.postForEntity(getRootUrl(),
-				createDefaultRequestBody(UNKOWN_MANUFACTURER_ID), BeerDto.class);
+		ResponseEntity<String> response = restTemplate.postForEntity(getRootUrl(),
+				createDefaultRequestBody(UNKOWN_MANUFACTURER_ID), String.class);
+		assertThat(response.getStatusCode()).as("check that an error response is returned")
+				.isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	public void addANewBeerWhenTheNewBeerAlreadyExists() {
+		ResponseEntity<String> response = restTemplate.postForEntity(getRootUrl(), createDefaultKnownBeer(),
+				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
 				.isEqualTo(HttpStatus.BAD_REQUEST);
 	}
@@ -171,7 +179,7 @@ public class BeerControllerIntegrationTest {
 	public void modifyKnownBeer() {
 		HttpHeaders headers = new HttpHeaders();
 		String resourceUrl = getRootUrl() + KNOWN_BEER_ID;
-		HttpEntity<BeerDto> requestUpdate = new HttpEntity<>(createDefaultRequestBody(null), headers);
+		HttpEntity<BeerDto> requestUpdate = new HttpEntity<>(createDefaultRequestBody(KNOWN_MANUFACTURER_ID), headers);
 		ResponseEntity<BeerDto> response = restTemplate.exchange(resourceUrl, HttpMethod.PUT, requestUpdate,
 				BeerDto.class);
 		assertThat(response.getBody()).as("check that the related beer was updated")
@@ -182,11 +190,11 @@ public class BeerControllerIntegrationTest {
 	public void modifyUnkownBeer() {
 		HttpHeaders headers = new HttpHeaders();
 		String resourceUrl = getRootUrl() + UNKOWN_BEER_ID;
-		HttpEntity<BeerDto> requestUpdate = new HttpEntity<>(createDefaultRequestBody(null), headers);
+		HttpEntity<BeerDto> requestUpdate = new HttpEntity<>(createDefaultRequestBody(UNKOWN_MANUFACTURER_ID), headers);
 		ResponseEntity<String> response = restTemplate.exchange(resourceUrl, HttpMethod.PUT, requestUpdate,
 				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -212,7 +220,7 @@ public class BeerControllerIntegrationTest {
 		String resourceUrl = getRootUrl() + UNKOWN_BEER_ID;
 		ResponseEntity<String> response = restTemplate.exchange(resourceUrl, HttpMethod.DELETE, null, String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test

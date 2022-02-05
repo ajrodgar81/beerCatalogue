@@ -1,10 +1,15 @@
 package com.haufeGroup.beerCatalogue.service;
 
+import java.util.NoSuchElementException;
+
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.haufeGroup.beerCatalogue.exception.BeerServiceException;
 import com.haufeGroup.beerCatalogue.mapper.BeerMapper;
@@ -14,11 +19,18 @@ import com.haufeGroup.beerCatalogue.repository.BeerRepository;
 import com.haufeGroup.beerCatalogue.repository.ManufacturerRepository;
 
 @Service
+@Validated
 public class BeerServiceImpl implements IBeerService {
 
 	public static final String INVALID_SORT_CRITERIA = "The sort criteria provided is not valid. Please check that the field exists and the provided order value is asc or desc.";
 
 	public static final String MODIFY_BEER_MANUFACTURER_ERROR_MESSAGE = "Modify manufacturer of existing beer is not allowed.";
+
+	public static final String MANUFACTURER_NOT_FOUND_ERROR_MESSAGE = "the id provided not belongs to existing manufacturer.";
+
+	public static final String BEER_NOT_FOUND_ERROR_MEESSAGE = "the provided id not belongs to existing beer.";
+
+	public static final String ADD_EXISTING_BEER_ERROR_MESSAGE = "it's not possible create a beer that already exists.";
 
 	@Autowired
 	private BeerRepository beerRepository;
@@ -30,7 +42,7 @@ public class BeerServiceImpl implements IBeerService {
 	private BeerMapper modelMapper;
 
 	@Override
-	public Page<Beer> getAllBeersWithSortPagination(final Pageable pagingSort) {
+	public Page<Beer> getAllBeersWithSortPagination(@NotNull final Pageable pagingSort) {
 		try {
 			return beerRepository.findAll(pagingSort);
 		} catch (PropertyReferenceException pre) {
@@ -41,41 +53,56 @@ public class BeerServiceImpl implements IBeerService {
 	}
 
 	@Override
-	public Beer getBeerById(final Long id) {
-		return beerRepository.findById(id).orElseThrow(BeerServiceException::new);
+	public Beer getBeerById(@NotNull final Long beerId) {
+		checkThatTheBeerExists(beerId);
+		return beerRepository.findById(beerId).get();
 	}
 
 	@Override
-	public Beer addBeer(final Beer newBeer) {
-		checkThatTheManufacturerExists(newBeer.getManufacturer());
-		return beerRepository.save(newBeer);
-	}
-
-	private void checkThatTheManufacturerExists(final Manufacturer manufacturer) {
-		if (manufacturer == null || manufacturer.getId() == null) {
-			throw new BeerServiceException();
+	public Beer addNewBeer(@NotNull final Beer newBeer) {
+		if (newBeer.getId() == null || !beerRepository.existsById(newBeer.getId())) {
+			checkThatTheManufacturerExists(newBeer.getManufacturer());
+			return beerRepository.save(newBeer);
 		}
-		manufacturerRepository.findById(manufacturer.getId()).orElseThrow(BeerServiceException::new);
+		throw new BeerServiceException(ADD_EXISTING_BEER_ERROR_MESSAGE);
 	}
 
 	@Override
-	public Beer updateBeer(final Beer beerToModify) {
-		Beer oldBeer = getBeerById(beerToModify.getId());
-		checkThatManufacturerIsNotUpdated(oldBeer, beerToModify);
-		modelMapper.mergeEntity(beerToModify, oldBeer);
-		return beerRepository.save(oldBeer);
+	public Beer updateBeer(@NotNull final Beer beerToModify) {
+		try {
+			Beer oldBeer = beerRepository.findById(beerToModify.getId()).orElseThrow();
+			checkThatManufacturerIsNotUpdated(oldBeer.getManufacturer(), beerToModify.getManufacturer());
+			modelMapper.mergeEntity(beerToModify, oldBeer);
+			return beerRepository.save(oldBeer);
+		} catch (NoSuchElementException nsee) {
+			throw new BeerServiceException(BEER_NOT_FOUND_ERROR_MEESSAGE);
+		} catch (Exception ex) {
+			throw new BeerServiceException(ex.getMessage());
+		}
 	}
 
-	private void checkThatManufacturerIsNotUpdated(Beer oldBeer, Beer beerToModify) {
-		if (beerToModify.getManufacturer() != null
-				&& !beerToModify.getManufacturer().getId().equals(oldBeer.getManufacturer().getId())) {
+	@Override
+	public void deleteBeerById(@NotNull final Long beerId) {
+		checkThatTheBeerExists(beerId);
+		beerRepository.deleteById(beerId);
+	}
+
+	private void checkThatTheBeerExists(final Long beerId) {
+		if (!beerRepository.existsById(beerId)) {
+			throw new BeerServiceException(BEER_NOT_FOUND_ERROR_MEESSAGE);
+		}
+	}
+
+	private void checkThatManufacturerIsNotUpdated(@NotNull final Manufacturer oldBeerManufacturer,
+			@NotNull final Manufacturer beerManufacturerToModify) {
+		if (!beerManufacturerToModify.getId().equals(oldBeerManufacturer.getId())) {
 			throw new BeerServiceException(MODIFY_BEER_MANUFACTURER_ERROR_MESSAGE);
 		}
 	}
 
-	@Override
-	public void deleteBeerById(final Long id) {
-		beerRepository.delete(getBeerById(id));
+	private void checkThatTheManufacturerExists(@NotNull final Manufacturer manufacturer) {
+		if (manufacturer.getId() == null || !manufacturerRepository.existsById(manufacturer.getId())) {
+			throw new BeerServiceException(MANUFACTURER_NOT_FOUND_ERROR_MESSAGE);
+		}
 	}
-
 }

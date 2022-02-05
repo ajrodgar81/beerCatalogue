@@ -20,6 +20,9 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.haufeGroup.beerCatalogue.exception.BeerCatalogueException;
+import com.haufeGroup.beerCatalogue.exception.BeerServiceException;
+import com.haufeGroup.beerCatalogue.exception.ManufacturerServiceException;
+import com.haufeGroup.beerCatalogue.service.BeerServiceImpl;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -30,7 +33,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("timestamp", new Date());
 		body.put("status", status.value());
-
 		// Get all errors
 		List<String> errors = ex.getBindingResult().getFieldErrors().stream()
 				.map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.toList());
@@ -50,12 +52,38 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(body, new HttpHeaders(), HttpStatus.BAD_REQUEST);
 	}
 
+	@ExceptionHandler({ BeerServiceException.class })
+	public ResponseEntity<Object> handleBeerServiceException(BeerCatalogueException ex) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		HttpStatus httpErrorStatus = BeerServiceImpl.BEER_NOT_FOUND_ERROR_MEESSAGE.equals(ex.getMessage())
+				? HttpStatus.NOT_FOUND
+				: HttpStatus.BAD_REQUEST;
+		addErrorToBody(body, httpErrorStatus, ex.getMessage());
+		return new ResponseEntity<>(body, new HttpHeaders(), httpErrorStatus);
+	}
+
+	@ExceptionHandler({ ManufacturerServiceException.class })
+	public ResponseEntity<Object> handleManufacturerServiceException(BeerCatalogueException ex) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		HttpStatus httpErrorStatus = BeerServiceImpl.MANUFACTURER_NOT_FOUND_ERROR_MESSAGE.equals(ex.getMessage())
+				? HttpStatus.NOT_FOUND
+				: HttpStatus.BAD_REQUEST;
+		addErrorToBody(body, httpErrorStatus, ex.getMessage());
+		return new ResponseEntity<>(body, new HttpHeaders(), httpErrorStatus);
+	}
+
 	@ExceptionHandler({ BeerCatalogueException.class })
 	public ResponseEntity<Object> handleBeerCatalogueException(BeerCatalogueException ex) {
 		Map<String, Object> body = new LinkedHashMap<>();
+		HttpStatus httpErrorStatus = HttpStatus.BAD_REQUEST;
+		addErrorToBody(body, httpErrorStatus, ex.getMessage());
+		return new ResponseEntity<>(body, new HttpHeaders(), httpErrorStatus);
+	}
+
+	private void addErrorToBody(final Map<String, Object> body, final HttpStatus httpErrorStatus,
+			final String errorMessage) {
 		body.put("timestamp", new Date());
-		body.put("status", HttpStatus.BAD_REQUEST);
-		body.put("error", ex.getMessage());
-		return new ResponseEntity<>(body, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+		body.put("status", httpErrorStatus);
+		body.put("error", errorMessage);
 	}
 }

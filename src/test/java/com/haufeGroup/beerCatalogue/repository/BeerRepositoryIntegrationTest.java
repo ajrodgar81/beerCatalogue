@@ -3,8 +3,7 @@ package com.haufeGroup.beerCatalogue.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-
-import javax.persistence.EntityNotFoundException;
+import java.util.NoSuchElementException;
 
 import org.assertj.core.api.Fail;
 import org.junit.Assert;
@@ -166,6 +165,14 @@ public class BeerRepositoryIntegrationTest {
 	}
 
 	@Test
+	public void findByManufacturerIdWithPaginationCriteriaSortByDescendi() {
+		Page<Beer> beerPage = testSubject.findByManufacturerId(null,
+				getPageableAccordingToSortCriteria(new String[] { "id", "desc" }));
+		assertThat(beerPage.getContent()).as("check that the retrieved beer page is sorted by descending beer id")
+				.isEmpty();
+	}
+
+	@Test
 	public void findByManufacturerIdWithPaginationCriteriaSortByAscendingBeerNameAndDescendingBeerId() {
 		Page<Beer> beerPage = testSubject.findByManufacturerId(1L,
 				getPageableAccordingToSortCriteria(new String[] { "name,asc", "id,desc" }));
@@ -297,33 +304,30 @@ public class BeerRepositoryIntegrationTest {
 	public void addNewBeerWhenManufacturerIsNull() {
 		Assert.assertThrows(DataIntegrityViolationException.class,
 				() -> testSubject.save(createDefaultBeerWithoutManufacturer()));
-
 	}
 
 	@Test
 	public void getByIdAnExistingBeer() {
 		try {
-			testSubject.findById(KNOWN_BEER_ID).orElseThrow(EntityNotFoundException::new);
-		} catch (EntityNotFoundException enfe) {
+			testSubject.findById(KNOWN_BEER_ID).orElseThrow();
+		} catch (NoSuchElementException enfe) {
 			Fail.fail("beer not found");
 		}
 	}
 
 	@Test
 	public void getByIdAnUnknownBeer() {
-		Assert.assertThrows(EntityNotFoundException.class,
-				() -> testSubject.findById(UNKNOWN_BEER_ID).orElseThrow(EntityNotFoundException::new));
+		Assert.assertThrows(NoSuchElementException.class, () -> testSubject.findById(UNKNOWN_BEER_ID).orElseThrow());
 	}
 
 	@Test
 	public void getByIdBeerMarkedAsDeleted() {
-		Assert.assertThrows(EntityNotFoundException.class,
-				() -> testSubject.findById(REMOVED_BEER_ID).orElseThrow(EntityNotFoundException::new));
+		Assert.assertThrows(NoSuchElementException.class, () -> testSubject.findById(REMOVED_BEER_ID).orElseThrow());
 	}
 
 	@Test
 	public void updateBeer() {
-		Beer oldBeer = testSubject.findById(KNOWN_BEER_ID).orElseThrow(EntityNotFoundException::new);
+		Beer oldBeer = testSubject.findById(KNOWN_BEER_ID).orElseThrow();
 		oldBeer.setDescription("updatedDescription");
 		Beer updatedBeer = testSubject.save(oldBeer);
 		assertThat(entityManager.find(Beer.class, updatedBeer.getId())).as("check that the beer was modified")

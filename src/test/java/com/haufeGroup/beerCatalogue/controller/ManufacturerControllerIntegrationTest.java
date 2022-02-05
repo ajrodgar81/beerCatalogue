@@ -132,7 +132,7 @@ public class ManufacturerControllerIntegrationTest {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + REMOVED_MANUFACTURER_ID,
 				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class ManufacturerControllerIntegrationTest {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + UNKOWN_MANUFACTURER_ID,
 				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -226,8 +226,8 @@ public class ManufacturerControllerIntegrationTest {
 	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerNotExists() {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + UNKOWN_MANUFACTURER_ID + "/beers/",
 				String.class);
-		assertThat(response.getStatusCode()).as("check that a bad request status code is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+		assertThat(response.getStatusCode()).as("check that an error response is returned")
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -235,8 +235,8 @@ public class ManufacturerControllerIntegrationTest {
 	public void getManufacturerBeersWithSortPaginationWhenWhenManufacturerIdBelongsToManufacturerMarkedAsDeletedInDatabase() {
 		ResponseEntity<String> response = restTemplate.getForEntity(getRootUrl() + REMOVED_MANUFACTURER_ID + "/beers/",
 				String.class);
-		assertThat(response.getStatusCode()).as("check that a bad request status code is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+		assertThat(response.getStatusCode()).as("check that an error response is returned")
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -255,6 +255,14 @@ public class ManufacturerControllerIntegrationTest {
 	}
 
 	@Test
+	public void addANewManufacturerWhenTheNewManufacturerAlreadyExists() {
+		ResponseEntity<String> response = restTemplate.postForEntity(getRootUrl(),
+				createDefaultManufacturerWithId(KNOWN_MANUFACTURER_ID), String.class);
+		assertThat(response.getStatusCode()).as("check that an error response is returned")
+				.isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
 	public void moodifyKnownManufacturer() {
 		HttpHeaders headers = new HttpHeaders();
 		String resourceUrl = getRootUrl() + KNOWN_MANUFACTURER_ID;
@@ -270,10 +278,10 @@ public class ManufacturerControllerIntegrationTest {
 		HttpHeaders headers = new HttpHeaders();
 		String resourceUrl = getRootUrl() + UNKOWN_MANUFACTURER_ID;
 		HttpEntity<ManufacturerDto> requestUpdate = new HttpEntity<>(createDefaultBody(), headers);
-		ResponseEntity<ManufacturerDto> response = restTemplate.exchange(resourceUrl, HttpMethod.PUT, requestUpdate,
-				ManufacturerDto.class);
+		ResponseEntity<String> response = restTemplate.exchange(resourceUrl, HttpMethod.PUT, requestUpdate,
+				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
@@ -288,7 +296,7 @@ public class ManufacturerControllerIntegrationTest {
 		String resourceUrl = getRootUrl() + UNKOWN_MANUFACTURER_ID;
 		ResponseEntity<String> response = restTemplate.exchange(resourceUrl, HttpMethod.DELETE, null, String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
-				.isEqualTo(HttpStatus.BAD_REQUEST);
+				.isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
