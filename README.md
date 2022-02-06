@@ -42,9 +42,9 @@
 	</ul>
 </ul>
 
-- History commits: it reflects the normal development process: start developing a basic solution, enhanced, last minute changes and fix it after the code review before delivery the feature. For example, in the code review phase I detect that a class of junit4 library was imported by mistake when I migrate the tests to Jupiter (Junit version 5).<br><br>
+- History commits: it reflects the normal development process: start developing a basic solution, enhanced, last minute changes and fix it after the code review before delivery the feature. For example, in the code review phase I detect that a class of junit4 library was imported by mistake when I migrate the tests to Jupiter (Junit version 5).<br>
 
-- Some code statistics: 184 tests, global coverage 81,1 %.
+- Some code statistics: 184 tests, global coverage 81,1 %.<br><br>
 
 
 **Business logic:**
@@ -81,17 +81,17 @@
 		<ul>
 			<li>[Beer Catalogue API Docs](http://localhost:8080/beerCatalogue/api/v3/api-docs)</li><br>
 			<li>[Beer Catalogue API Swagger UI] (http://localhost:8080/beerCatalogue/api/swagger-ui/index.html)</li><br>
-			<li>[H2 Console](http://localhost:8080/beerCatalogue/api/h2-ui/)</li><br> 
+			<li>[H2 Console] (http://localhost:8080/beerCatalogue/api/h2-ui/)</li><br> 
 		</ul>
-	<li>Alternatively, you could generate the api specification from a command line using the following maven command: "_mvn clean verify -DskipTests=true_". The result could be found in the project folder "_/target/openapi-spec_".</li><br>
+	<li>Alternatively, you could generate the api specification from a command line using the following maven command: "mvn clean verify -DskipTests=true". The result could be found in the project folder "/target/openapi-spec".</li><br>
 </ul>
 
 **Installation:**
 
 <ol>
 	<li>Open a terminal console in the project root folder and execute the following command to generate the jar: mvn -U clean install</li><br>
-	<li>On the same terminal console, change the directory to the generated project folder _target_</li><br>
-	<li>In the project folder _target_, to run the application execute the following command: java -jar beerCatalogue-0.0.1-SNAPSHOT.jar</li><br>  
+	<li>On the same terminal console, change the directory to the generated project folder "target"</li><br>
+	<li>In the project folder "target", to run the application execute the following command: java -jar beerCatalogue-0.0.1-SNAPSHOT.jar</li><br>  
 </ol>
 
 **TODO for the next springs:**
