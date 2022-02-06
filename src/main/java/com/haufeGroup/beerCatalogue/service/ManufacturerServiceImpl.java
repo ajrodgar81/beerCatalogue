@@ -26,7 +26,7 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 
 	public static final String INVALID_SORT_CRITERIA = "The sort criteria provided is not valid. Please check that the field exists and the provided order value is asc or desc.";
 
-	public static final String ADD_EXISTING_MANUFACTURER_ERROR_MESSAGE = "it's not possible create a manufacturer that already exists.";
+	public static final String MANUFACTURER_ID_PROVIDED_ERROR_MESSAGE = "it's not possible create a manufacturer with a specific id.";
 
 	@Autowired
 	ManufacturerRepository manufacturerRepository;
@@ -68,10 +68,8 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 
 	@Override
 	public Manufacturer addNewManufacturer(@NotNull final Manufacturer newManufacturer) {
-		if (newManufacturer.getId() == null || !manufacturerRepository.existsById(newManufacturer.getId())) {
-			return manufacturerRepository.save(newManufacturer);
-		}
-		throw new ManufacturerServiceException(ADD_EXISTING_MANUFACTURER_ERROR_MESSAGE);
+		checkThatManufacturerIdIsNotProvided(newManufacturer.getId());
+		return manufacturerRepository.save(newManufacturer);
 	}
 
 	@Override
@@ -91,6 +89,12 @@ public class ManufacturerServiceImpl implements IManufacturerService {
 	public void deleteManufacturerById(@NotNull final Long manufacturerId) {
 		checkThatManufacturerExists(manufacturerId);
 		manufacturerRepository.deleteById(manufacturerId);
+	}
+
+	private void checkThatManufacturerIdIsNotProvided(final Long manufacturerId) {
+		if (manufacturerId != null) {
+			throw new ManufacturerServiceException(MANUFACTURER_ID_PROVIDED_ERROR_MESSAGE);
+		}
 	}
 
 	private void checkThatManufacturerExists(final Long manufacturerId) {

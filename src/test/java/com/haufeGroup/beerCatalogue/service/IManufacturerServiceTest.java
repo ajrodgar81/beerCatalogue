@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import javax.validation.ConstraintViolationException;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,7 +77,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getAllManufacturersWithSortPaginationWhenTheRelatedSortCriteriaIsInvalid() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
 			Mockito.when(manufacturerRepository.findAll(sortPageable)).thenThrow(PropertyReferenceException.class);
@@ -87,7 +87,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getAllManufacturersWithSortPaginationWhenTheSortPaginationCriteriaProvidedIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class,
+		Assertions.assertThrows(ConstraintViolationException.class,
 				() -> testSubject.getAllManufacturesWithSortPagination(null));
 	}
 
@@ -105,7 +105,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerNotExists() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
 			Mockito.when(manufacturerRepository.existsById(UNKNOWN_MANUFACTURER_ID)).thenReturn(false);
@@ -115,7 +115,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerIsMarkedAsDeleted() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
 			Mockito.when(manufacturerRepository.existsById(REMOVED_MANUFACTURER_ID)).thenReturn(false);
@@ -125,7 +125,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerExistsButTheSortCriteriaIsInvalid() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Sort invalidSortCriteria = sortExtractor.extractSortCriteria(new String[] { "unknownName", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, invalidSortCriteria);
 			Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
@@ -150,13 +150,13 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenTheSortPaginationCriteriaProvidedIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class,
+		Assertions.assertThrows(ConstraintViolationException.class,
 				() -> testSubject.getManufacturerBeersWithSortPagination(KNOWN_MANUFACTURER_ID, null));
 	}
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenTheManufacturerIdProvidedIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class, () -> {
+		Assertions.assertThrows(ConstraintViolationException.class, () -> {
 			Sort validSortCriteria = sortExtractor.extractSortCriteria(new String[] { "name", "asc" });
 			Pageable sortPageable = PageRequest.of(PAGE_INDEX, PAGE_SIZE, validSortCriteria);
 			testSubject.getManufacturerBeersWithSortPagination(null, sortPageable);
@@ -165,7 +165,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerBeersWithSortPaginationWhenBothManufacturerIdAndSortPaginationCriteriaAreNull() {
-		Assert.assertThrows(ConstraintViolationException.class,
+		Assertions.assertThrows(ConstraintViolationException.class,
 				() -> testSubject.getManufacturerBeersWithSortPagination(null, null));
 	}
 
@@ -180,7 +180,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerByIdWhenTheIdBelongsToNonExistingManufacturer() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.existsById(UNKNOWN_MANUFACTURER_ID)).thenReturn(false);
 			testSubject.getManufacturerById(UNKNOWN_MANUFACTURER_ID);
 		});
@@ -188,7 +188,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerByIdWhenTheIdBelongsToManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.existsById(REMOVED_MANUFACTURER_ID)).thenReturn(false);
 			testSubject.getManufacturerById(REMOVED_MANUFACTURER_ID);
 		});
@@ -196,11 +196,11 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void getManufacturerByIdWhenTheIdIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.getManufacturerById(null));
+		Assertions.assertThrows(ConstraintViolationException.class, () -> testSubject.getManufacturerById(null));
 	}
 
 	@Test
-	public void addNewManufacturerWhenTheNewManufacturerNotExists() {
+	public void addNewManufacturerWhenTheNewManufacturerIdIsNotProvided() {
 		Manufacturer newManufacturer = createDefaultManufacturerWithoutId();
 		Manufacturer savedManufacturer = createDefaultManufacturer();
 		Mockito.when(manufacturerRepository.save(newManufacturer)).thenReturn(savedManufacturer);
@@ -209,8 +209,8 @@ public class IManufacturerServiceTest {
 	}
 
 	@Test
-	public void addNewManufacturerWhenTheNewManufacturerAlreadyExists() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+	public void addNewManufacturerWhenTheNewManufacturerIdIsProvided() {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.existsById(KNOWN_MANUFACTURER_ID)).thenReturn(true);
 			testSubject.addNewManufacturer(createDefaultManufacturer());
 		});
@@ -218,7 +218,12 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void addNewManufacturerWhenTheNewManufacturerIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.addNewManufacturer(null));
+		Assertions.assertThrows(ConstraintViolationException.class, () -> testSubject.addNewManufacturer(null));
+	}
+
+	@Test
+	public void addNewManufacturerWhenTheIdProvidedNotBelongs() {
+		Assertions.assertThrows(ConstraintViolationException.class, () -> testSubject.addNewManufacturer(null));
 	}
 
 	@Test
@@ -235,7 +240,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void updateAManufacturerThatNotExists() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.findById(UNKNOWN_MANUFACTURER_ID))
 					.thenThrow(NoSuchElementException.class);
 			Manufacturer manufacturerToModify = createDefaultManufacturerWithoutId();
@@ -247,7 +252,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void updateAManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.findById(REMOVED_MANUFACTURER_ID))
 					.thenThrow(NoSuchElementException.class);
 			Manufacturer manufacturerToModify = createDefaultManufacturerWithoutId();
@@ -259,7 +264,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void updateManufactuerWhenTheManufacturerToModifyIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.updateManufacturer(null));
+		Assertions.assertThrows(ConstraintViolationException.class, () -> testSubject.updateManufacturer(null));
 	}
 
 	@Test
@@ -271,7 +276,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void deleteManufacturerByIdWhenTheIdBelongsToNonExistingManufacturer() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.existsById(UNKNOWN_MANUFACTURER_ID)).thenReturn(false);
 			testSubject.deleteManufacturerById(UNKNOWN_MANUFACTURER_ID);
 		});
@@ -279,7 +284,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void deleteManufacturerByIdWhenTheIdBelongsToManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(ManufacturerServiceException.class, () -> {
+		Assertions.assertThrows(ManufacturerServiceException.class, () -> {
 			Mockito.when(manufacturerRepository.existsById(REMOVED_MANUFACTURER_ID)).thenReturn(false);
 			testSubject.deleteManufacturerById(REMOVED_MANUFACTURER_ID);
 		});
@@ -287,7 +292,7 @@ public class IManufacturerServiceTest {
 
 	@Test
 	public void deleteManufactuerByIdWhenTheIdIsNull() {
-		Assert.assertThrows(ConstraintViolationException.class, () -> testSubject.deleteManufacturerById(null));
+		Assertions.assertThrows(ConstraintViolationException.class, () -> testSubject.deleteManufacturerById(null));
 	}
 
 	private Page<Beer> createDefaultBeerPage() {

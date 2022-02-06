@@ -30,7 +30,7 @@ public class BeerServiceImpl implements IBeerService {
 
 	public static final String BEER_NOT_FOUND_ERROR_MEESSAGE = "the provided id not belongs to existing beer.";
 
-	public static final String ADD_EXISTING_BEER_ERROR_MESSAGE = "it's not possible create a beer that already exists.";
+	public static final String BEER_ID_PROVIDED_ERROR_MESSAGE = "it's not possible create a beer with a specific id.";
 
 	@Autowired
 	private BeerRepository beerRepository;
@@ -60,11 +60,9 @@ public class BeerServiceImpl implements IBeerService {
 
 	@Override
 	public Beer addNewBeer(@NotNull final Beer newBeer) {
-		if (newBeer.getId() == null || !beerRepository.existsById(newBeer.getId())) {
-			checkThatTheManufacturerExists(newBeer.getManufacturer());
-			return beerRepository.save(newBeer);
-		}
-		throw new BeerServiceException(ADD_EXISTING_BEER_ERROR_MESSAGE);
+		checkThatBeerIdIsNotProvided(newBeer.getId());
+		checkThatTheManufacturerExists(newBeer.getManufacturer());
+		return beerRepository.save(newBeer);
 	}
 
 	@Override
@@ -85,6 +83,12 @@ public class BeerServiceImpl implements IBeerService {
 	public void deleteBeerById(@NotNull final Long beerId) {
 		checkThatTheBeerExists(beerId);
 		beerRepository.deleteById(beerId);
+	}
+
+	private void checkThatBeerIdIsNotProvided(final Long beerId) {
+		if (beerId != null) {
+			throw new BeerServiceException(BEER_ID_PROVIDED_ERROR_MESSAGE);
+		}
 	}
 
 	private void checkThatTheBeerExists(final Long beerId) {

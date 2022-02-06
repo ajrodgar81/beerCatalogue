@@ -43,7 +43,7 @@ public class BeerControllerIntegrationTest {
 	private int port;
 
 	private String getRootUrl() {
-		return "http://localhost:" + port + "/api/beers/";
+		return "http://localhost:" + port + "/beerCatalogue/api/beers/";
 	}
 
 	@Test
@@ -168,7 +168,7 @@ public class BeerControllerIntegrationTest {
 	}
 
 	@Test
-	public void addANewBeerWhenTheNewBeerAlreadyExists() {
+	public void addANewBeerWhenTheNewBeerIdIsProvided() {
 		ResponseEntity<String> response = restTemplate.postForEntity(getRootUrl(), createDefaultKnownBeer(),
 				String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")

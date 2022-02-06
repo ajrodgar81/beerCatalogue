@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.assertj.core.api.Fail;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,21 +86,20 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void findAllBeersWithPaginationCriteriaSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class,
+		Assertions.assertThrows(PropertyReferenceException.class,
 				() -> testSubject.findAll(getPageableAccordingToSortCriteria(new String[] { "unknownField", "desc" })));
-
 	}
 
 	@Test
 	public void findAllBeersWithPaginationCriteriaSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(getPageableAccordingToSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findAllBeersWithPaginationCriteriaSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject
 				.findAll(getPageableAccordingToSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 
 	}
@@ -130,28 +129,28 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void findAllBeersWhenSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class,
+		Assertions.assertThrows(PropertyReferenceException.class,
 				() -> testSubject.findAll(sortExtractor.extractSortCriteria(new String[] { "unknownField", "desc" })));
 
 	}
 
 	@Test
 	public void findAllBeersWhenSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findAllBeersWhenSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 
 	}
 
 	@Test
 	public void findAllBeersWhenSortForMultipleFieldsAndAtLeastOneOfThemHasADirectionNotValid() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
 
 	}
@@ -183,27 +182,27 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void findByManufacturerIdWithPaginationCriteriaSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "unknownField", "desc" })));
 
 	}
 
 	@Test
 	public void findByManufacturerIdWithPaginationCriteriaSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findByManufacturerIdWithPaginationCriteriaSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 	}
 
 	@Test
 	public void findByManufacturerIdWithPaginationCriteriaSortForMultipleFieldsAndAtLeastOneOfThemWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
 	}
 
@@ -242,27 +241,27 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void findByManufacturerIdWhenSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "unknownField", "desc" })));
 
 	}
 
 	@Test
 	public void findByManufacturerIdWhenSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findByManufacturerIdWhenSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 	}
 
 	@Test
 	public void findByManufacturerIdWhenSortForMultipleFieldsAndAtLeastOneOfThemWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject.findByManufacturerId(1L,
 				sortExtractor.extractSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
 	}
 
@@ -291,7 +290,7 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void addNewBeerWhenTheRelatedManufacturerIsUnknown() {
-		Assert.assertThrows(DataIntegrityViolationException.class, () -> {
+		Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
 			Beer beer = createDefaultBeerWithoutManufacturer();
 			beer.setManufacturer(new Manufacturer());
 			beer.getManufacturer().setId(UNKNOWN_MANUFACTURER_ID);
@@ -302,7 +301,7 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void addNewBeerWhenManufacturerIsNull() {
-		Assert.assertThrows(DataIntegrityViolationException.class,
+		Assertions.assertThrows(DataIntegrityViolationException.class,
 				() -> testSubject.save(createDefaultBeerWithoutManufacturer()));
 	}
 
@@ -317,12 +316,14 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void getByIdAnUnknownBeer() {
-		Assert.assertThrows(NoSuchElementException.class, () -> testSubject.findById(UNKNOWN_BEER_ID).orElseThrow());
+		Assertions.assertThrows(NoSuchElementException.class,
+				() -> testSubject.findById(UNKNOWN_BEER_ID).orElseThrow());
 	}
 
 	@Test
 	public void getByIdBeerMarkedAsDeleted() {
-		Assert.assertThrows(NoSuchElementException.class, () -> testSubject.findById(REMOVED_BEER_ID).orElseThrow());
+		Assertions.assertThrows(NoSuchElementException.class,
+				() -> testSubject.findById(REMOVED_BEER_ID).orElseThrow());
 	}
 
 	@Test
@@ -342,12 +343,12 @@ public class BeerRepositoryIntegrationTest {
 
 	@Test
 	public void deleteBeerByIdWhenTheIdBelongsToBeerMarkedAsDeleted() {
-		Assert.assertThrows(EmptyResultDataAccessException.class, () -> testSubject.deleteById(REMOVED_BEER_ID));
+		Assertions.assertThrows(EmptyResultDataAccessException.class, () -> testSubject.deleteById(REMOVED_BEER_ID));
 	}
 
 	@Test
 	public void deleteBeerByIdWhenTheIdBelongsToNonExistingBeer() {
-		Assert.assertThrows(EmptyResultDataAccessException.class, () -> testSubject.deleteById(UNKNOWN_BEER_ID));
+		Assertions.assertThrows(EmptyResultDataAccessException.class, () -> testSubject.deleteById(UNKNOWN_BEER_ID));
 	}
 
 	private Pageable getPageableAccordingToSortCriteria(final String[] sortCriteria) {

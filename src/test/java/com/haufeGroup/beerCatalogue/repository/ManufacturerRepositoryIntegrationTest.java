@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.assertj.core.api.Fail;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,28 +82,28 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	@Test
 	public void findAllManufacturersWithPaginationSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class,
+		Assertions.assertThrows(PropertyReferenceException.class,
 				() -> testSubject.findAll(getPageableAccordingToSortCriteria(new String[] { "unknownField", "desc" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWithPaginationSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(getPageableAccordingToSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWithPaginationSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject
 				.findAll(getPageableAccordingToSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWithPaginationSortForMultipleFieldsAndAtLeastOneOfThemHasADirectionNotValid() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(getPageableAccordingToSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
 
 	}
@@ -136,28 +136,28 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	@Test
 	public void findAllManufacturersWhenSortByUnknownField() {
-		Assert.assertThrows(PropertyReferenceException.class,
+		Assertions.assertThrows(PropertyReferenceException.class,
 				() -> testSubject.findAll(sortExtractor.extractSortCriteria(new String[] { "unknownField", "desc" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWhenSortForAFieldWithInvalidDirection() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "name", "unknownDirection" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWhenSortForMultipleFieldsAndAtLeastOneOfThemIsUnknown() {
-		Assert.assertThrows(PropertyReferenceException.class, () -> testSubject
+		Assertions.assertThrows(PropertyReferenceException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "name, asc", "unknownField, desc" })));
 
 	}
 
 	@Test
 	public void findAllManufacturersWhenSortForMultipleFieldsAndAtLeastOneOfThemHasADirectionNotValid() {
-		Assert.assertThrows(SortExtractorException.class, () -> testSubject
+		Assertions.assertThrows(SortExtractorException.class, () -> testSubject
 				.findAll(sortExtractor.extractSortCriteria(new String[] { "id, desc", "name, unknownDirection" })));
 
 	}
@@ -173,13 +173,13 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	@Test
 	public void getByIdAnUnknownManufacturer() {
-		Assert.assertThrows(NoSuchElementException.class,
+		Assertions.assertThrows(NoSuchElementException.class,
 				() -> testSubject.findById(UNKNOWN_MANUFACTURER_ID).orElseThrow());
 	}
 
 	@Test
 	public void getByIdAManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(NoSuchElementException.class,
+		Assertions.assertThrows(NoSuchElementException.class,
 				() -> testSubject.findById(REMOVED_MANUFACTURER_ID).orElseThrow());
 	}
 
@@ -208,13 +208,13 @@ public class ManufacturerRepositoryIntegrationTest {
 
 	@Test
 	public void deleteManufacturerByIdWhenTheIdBelongsToNonExistingManufacturer() {
-		Assert.assertThrows(EmptyResultDataAccessException.class,
+		Assertions.assertThrows(EmptyResultDataAccessException.class,
 				() -> testSubject.deleteById(UNKNOWN_MANUFACTURER_ID));
 	}
 
 	@Test
 	public void deleteManufacturerByIdWhenTheIdBelongsToManufacturerMarkedAsDeleted() {
-		Assert.assertThrows(EmptyResultDataAccessException.class,
+		Assertions.assertThrows(EmptyResultDataAccessException.class,
 				() -> testSubject.deleteById(REMOVED_MANUFACTURER_ID));
 	}
 

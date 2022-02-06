@@ -36,7 +36,7 @@ public class ManufacturerControllerIntegrationTest {
 	private int port;
 
 	private String getRootUrl() {
-		return "http://localhost:" + port + "/api/manufacturers/";
+		return "http://localhost:" + port + "/beerCatalogue/api/manufacturers/";
 	}
 
 	@Test
@@ -255,7 +255,7 @@ public class ManufacturerControllerIntegrationTest {
 	}
 
 	@Test
-	public void addANewManufacturerWhenTheNewManufacturerAlreadyExists() {
+	public void addANewManufacturerWhenTheNewManufacturerIdIsProvided() {
 		ResponseEntity<String> response = restTemplate.postForEntity(getRootUrl(),
 				createDefaultManufacturerWithId(KNOWN_MANUFACTURER_ID), String.class);
 		assertThat(response.getStatusCode()).as("check that an error response is returned")
